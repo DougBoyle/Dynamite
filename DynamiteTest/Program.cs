@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BotInterface.Bot;
 using BotInterface.Game;
+using DyanmiteBot2;
 
 namespace DynamiteTest {
     internal class Program {
@@ -20,13 +21,23 @@ namespace DynamiteTest {
         }
 
         public static void Main(string[] args) {
-			
-			// Set bots here
-            IBot bot1 = new DynamiteBot.Program();
-            IBot bot2 = new DyanmiteBot2.Class1();
-			
-			
-            
+            // Set bots here
+            int score1 = 0;
+            int score2 = 0;
+            for (int i = 0; i < 100; i++) {
+                IBot bot1 = new DynamiteBot.Program();
+                IBot bot2 = new ProgramGeneral(3);
+                var result = TestBots(bot1, bot2);
+                if (result > 0) {
+                    score1++;
+                } else if (result < 0) {
+                    score2++;
+                }
+            }
+            Console.WriteLine($"Final outcome: {score1} - {score2}");
+        }
+
+        public static int TestBots(IBot bot1, IBot bot2){
             Gamestate game1 = new Gamestate();
             Gamestate game2 = new Gamestate();
             List<Round> rounds1 = new List<Round>();
@@ -46,7 +57,7 @@ namespace DynamiteTest {
                     Console.WriteLine($"Bot1 error, Bot2 wins, score was {bot1Wins} - {bot2Wins}");
                     Console.WriteLine(e.Message);
                     Console.WriteLine(e.StackTrace);
-                    return;
+                    return -1;
                 }
 
                 try {
@@ -55,16 +66,16 @@ namespace DynamiteTest {
                     Console.WriteLine($"Bot2 error, Bot1 wins, score was {bot1Wins} - {bot2Wins}");
                     Console.WriteLine(e.Message);
                     Console.WriteLine(e.StackTrace);
-                    return;
+                    return 1;
                 }
 
                 if (move1 == Move.D && bot1D-- == 0) {
                     Console.WriteLine($"Bot1 out of dynamite, Bot2 wins, score was {bot1Wins} - {bot2Wins}");
-                    return;
+                    return -1;
                 }
                 if (move2 == Move.D && bot2D-- == 0) {
                     Console.WriteLine($"Bot2 out of dynamite, Bot1 wins, score was {bot1Wins} - {bot2Wins}");
-                    return;
+                    return 1;
                 }
                 var round1 = new Round();
                 var round2 = new Round();
@@ -89,13 +100,14 @@ namespace DynamiteTest {
 
                 if (bot1Wins >= 1000) {
                     Console.WriteLine($"Bot1 wins, score was {bot1Wins} - {bot2Wins}");
-                    return;
+                    return 1;
                 } else if (bot2Wins >= 1000) {
                     Console.WriteLine($"Bot2 wins, score was {bot1Wins} - {bot2Wins}");
-                    return;
+                    return -1;
                 }
             }
             Console.WriteLine($"Draw, score was {bot1Wins} - {bot2Wins}");
+            return 0;
         }
     }
 }
