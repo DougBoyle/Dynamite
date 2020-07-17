@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using BotInterface.Bot;
 using BotInterface.Game;
+using DynamiteBot;
 
-namespace DynamiteBot {
-    public class Program2 : IBot {
-        
+namespace DyanmiteBot2 {
+    public class ProgramGeneral : IBot, SmartBot {
+    
         
         public static Dictionary<Move, double> WinWeights(Dictionary<Move, double> moves) {
-            var R = moves[Move.S] + moves[Move.W] / 3;
-            var P = moves[Move.R] + moves[Move.W] / 3;
-            var S = moves[Move.P] + moves[Move.W] / 3;
+            var R = moves[Move.S] + moves[Move.W];
+            var P = moves[Move.R] + moves[Move.W];
+            var S = moves[Move.P] + moves[Move.W];
             var D = moves[Move.R] + moves[Move.P] + moves[Move.S]; // scale this by usage
             var W = moves[Move.D]; // scale this by usage
 
@@ -20,7 +20,7 @@ namespace DynamiteBot {
             D *= 0.5 + 1.5 * entropyScale; // half chance when predictable, double when no clue
             
             return new Dictionary<Move, double> {
-                {Move.R,R}, {Move.P, P}, {Move.S, S}, {Move.D, D/3}, {Move.W, W}
+                {Move.R,R}, {Move.P, P}, {Move.S, S}, {Move.D, D}, {Move.W, W/2}
             };
         }
 
@@ -37,14 +37,20 @@ namespace DynamiteBot {
             }
             return rate;
         }
+
+        public double balance = 1.0;
         
         public Dictionary<Move, double> DynamiteAdjust(Dictionary<Move, double> moves) {
-            var myFactor = MyDynamite * 10.0 / (1000.0 - MyScore) * Math.Sqrt(CurrentValue) * 0.7;
+            var myFactor = MyDynamite / (1000.0 - MyScore) * Math.Sqrt(CurrentValue) * balance;
             moves[Move.D] *= myFactor;
+            if (MyDynamite <= 0) {
+                moves[Move.D] = 0.0;
+            }
+
             return moves;
         }
         
-        int MyDynamite = 99; // opponent will always have chance of me playing dynamite
+        public int MyDynamite = 99; // opponent will always have chance of me playing dynamite
         int TheirDynamite = 100;
         int MyScore = 0;
         int TheirScore = 0;
@@ -75,14 +81,36 @@ namespace DynamiteBot {
                 CurrentValue = 1;
             }
             
-            ////////////////////////////////
-            // UPDATE ANY MATRICES ETC. HERE
             model.UpdateModel(g);
             dModel.Update(g);
         }
         
-        public IMarkov model = new GeneralMarkov(1, 0.01);
+        public IMarkov model;
         public DynamitePredictor dModel = new DynamitePredictor(0.1, 0.99);
+        public int order;
+        
+        public ProgramGeneral(int i = 2) {
+            order = i;
+            model = new GeneralMarkov(i, 0.01);
+        }
+
+        public ProgramGeneral(IMarkov m, int i = 2) {
+            order = i;
+            model = m;
+        }
+        
+        public Dictionary<Move, double> GetProbs(Gamestate g) {
+            Update(g);
+            var weights = model.GetProbs(g);
+            var tot = weights.Values.Sum();
+            var dRate = AdjustTheirDynamite(weights[Move.D] / tot);
+            weights[Move.D] = tot * dRate;
+            var selectionWeights = DynamiteAdjust(WinWeights(weights));
+            //var choice = GameLength < order+10 ? Choose(MovesRPS) : ChooseWeighted(selectionWeights);
+            
+            return GameLength < order + 5 ?
+                model.GetInitial() : selectionWeights;
+        }
         
         public Move MakeMove(Gamestate gamestate)
         {
@@ -92,13 +120,11 @@ namespace DynamiteBot {
             var dRate = AdjustTheirDynamite(weights[Move.D] / tot);
             weights[Move.D] = tot * dRate;
             var selectionWeights = DynamiteAdjust(WinWeights(weights));
-            var choice = GameLength < 10 ? Utils.Choose(Utils.MovesRPS) : Utils.ChooseWeighted(selectionWeights);
-     /*       if (GameLength % 10 == 0) {
-                Console.WriteLine($"Round {GameLength}");
-                Console.WriteLine($"Dynamite left {MyDynamite}");
-                PrintPredictions(selectionWeights);
-                Console.WriteLine(choice);
-            }*/
+            //var choice = GameLength < order+10 ? Choose(MovesRPS) : ChooseWeighted(selectionWeights);
+            
+            var choice = GameLength < order + 5 ?
+                Utils.ChooseWeighted(DynamiteAdjust(model.GetInitial())) : 
+                Utils.ChooseWeighted(selectionWeights);
             return choice;
         }
     }

@@ -1,0 +1,21 @@
+Reducing probability of dynamite by factor of about 0.5 seems to be best (vs 0.7 setting):
+Final outcome balance 0.50: 477 - 523
+Final outcome balance 0.70: 506 - 494
+Final outcome balance 0.85: 552 - 448
+Final outcome balance 1.00: 580 - 420
+Final outcome balance 1.20: 634 - 366
+Final outcome balance 1.35: 674 - 326
+Final outcome balance 1.50: 702 - 298
+Final outcome balance 2.00: 816 - 184
+
+
+Could be that system currently over-estimates how often to play water, hence rarely choosing dynamite is better.
+May want to accout for fact that not only does R beat S and W, but it also draws against Rock??
+- Not that important as everything draws against itself.
+
+
+-------------------
+
+Could add counter-prediction model guessing own chances and reducing by that times factor of 0.1 to encourage 
+being hard to predict.
+Could run it based on a simpler model i.e. just 1st order to avoid perfect self-prediction issue.
