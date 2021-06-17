@@ -4,17 +4,17 @@ using System.Linq;
 using System.Reflection;
 using BotInterface.Bot;
 using BotInterface.Game;
-using DyanmiteBot2;
 using DynamiteBot;
-using ProgramGeneral = DyanmiteBot2.ProgramGeneral;
 
-//using DyanmiteBot2;
+using WinningBot;
+
 
 namespace DynamiteTest {
     internal class Program {
         
         public static void Main(string[] args) {
-            
+           // int a = WinningBot.WinningBot.x;
+
            // foreach (var balance in new double[] {0.5, 0.7, 0.85, 1.0, 1.2, 1.4}) {
                 // Set bots here
                 int score1 = 0;
@@ -23,9 +23,10 @@ namespace DynamiteTest {
                 int remainingMain = 0;
                 for (int i = 0; i < 1000; i++) {
                     SmartBot bot1 = new DynamiteBot.Program();
-                    SmartBot bot2 = new ExpertBot(0.99);
-                    //      bot2.balance = balance;
-                    var result = TestBots(bot1, bot2, false);
+                //    IBot bot2 = new DynamiteBot.Program();
+                    IBot bot2 = new WinProgram();
+                //      bot2.balance = balance;
+                var result = TestBots(bot1, bot2, false);
                     if (result > 0) {
                         score1++;
                     }
@@ -33,7 +34,10 @@ namespace DynamiteTest {
                         score2++;
                     }
 
-                   if (i % 50 == 0) {
+                    // TODO: Test runs 1000 games (each with both bots playing first to 1000),
+                    //       Can't print every 50th game for WinningBot, as games take too long.
+                    //       Change % 50 to % 1 for that
+                   if (i % 1 == 0) {
                        Console.WriteLine($"{i}: {score1} - {score2}");
                     } 
                     //    }
@@ -48,7 +52,7 @@ namespace DynamiteTest {
             TestBots(bot1, bot2);*/
         
 
-        public static int TestBots(SmartBot bot1, SmartBot bot2, bool output = true){
+        public static int TestBots(SmartBot bot1, IBot bot2, bool output = true){
             Gamestate game1 = new Gamestate();
             Gamestate game2 = new Gamestate();
             List<Round> rounds1 = new List<Round>();
