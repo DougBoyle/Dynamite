@@ -92,7 +92,18 @@ namespace WinningBot.Predictors
         public static List<BasePredictor<MoveSequence>> SimpleMovePredictors = 
             new List<Func<int,predict<MoveSequence>>> { MyMovePredictor, YourMovePredictor, ResultMovePredictor, PairMovePredictor }
             .SelectMany(p => lengths.Select(l => p(l)))
-            .Select(p => new BasePredictor<MoveSequence>(p)).ToList();
+            .Select(p => new BasePredictor<MoveSequence>(p))
+            // New predictors based on 1st order Markov Model
+            .Concat(new List<BasePredictor<MoveSequence>> {
+                new MarkovPredictor(seq => seq.mine, MarkovPredictor.initialMoveProbs, 1).GetBasePredictor(),
+                new MarkovPredictor(seq => seq.yours, MarkovPredictor.initialMoveProbs, 1).GetBasePredictor(),
+                new MarkovPredictor(seq => seq.results, MarkovPredictor.initialMoveProbs, 1).GetBasePredictor(),
+                new MarkovPredictor(seq => seq.pairs, MarkovPredictor.initialMoveProbs, 1).GetBasePredictor()
+            })
+            .ToList();
+
+
+        
 
         static List<Func<char, char>> transformers = new List<Func<char, char>> { BeatWWithP, BeatWWithR, BeatWWithS };
 
